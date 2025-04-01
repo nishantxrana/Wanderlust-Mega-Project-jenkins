@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: infraflux/eks-backend:v2.1
+          image: infraflux/eks-backend:
           ports:
             - containerPort: 8080
 ---
