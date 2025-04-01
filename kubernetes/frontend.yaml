@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: infraflux/eks-frontend:v9
+          image: infraflux/eks-frontend:v10
           ports:
             - containerPort: 5173
 ---
