@@ -1,15 +1,17 @@
-@Library('Shared') _
+@Library('EKS-Shard-Library') _
 pipeline {
-    agent {label 'Node'}
+    agent {label 'worker'}
     
     environment{
         SONAR_HOME = tool "Sonar"
+        FRONTEND_DOCKER_TAG = "v${env.BUILD_ID}"
+        BACKEND_DOCKER_TAG = "v${env.BUILD_ID}"
     }
     
-    parameters {
-        string(name: 'FRONTEND_DOCKER_TAG', defaultValue: '', description: 'Setting docker image for latest push')
-        string(name: 'BACKEND_DOCKER_TAG', defaultValue: '', description: 'Setting docker image for latest push')
-    }
+    // parameters {
+    //     string(name: 'FRONTEND_DOCKER_TAG', defaultValue: '', description: 'Setting docker image for latest push')
+    //     string(name: 'BACKEND_DOCKER_TAG', defaultValue: '', description: 'Setting docker image for latest push')
+    // }
     
     stages {
         stage("Validate Parameters") {
@@ -32,7 +34,7 @@ pipeline {
         stage('Git: Code Checkout') {
             steps {
                 script{
-                    code_checkout("https://github.com/LondheShubham153/Wanderlust-Mega-Project.git","main")
+                    code_checkout("https://github.com/nishantxrana/Wanderlust-Mega-Project-jenkins.git","main")
                 }
             }
         }
@@ -56,7 +58,7 @@ pipeline {
         stage("SonarQube: Code Analysis"){
             steps{
                 script{
-                    sonarqube_analysis("Sonar","wanderlust","wanderlust")
+                    sonarqube_analysis("Sonar","EKS_Jenkins","EKS_Jenkins")
                 }
             }
         }
@@ -97,11 +99,11 @@ pipeline {
             steps{
                 script{
                         dir('backend'){
-                            docker_build("wanderlust-backend-beta","${params.BACKEND_DOCKER_TAG}","trainwithshubham")
+                            docker_build("eks-backend","${env.BACKEND_DOCKER_TAG}","infraflux")
                         }
                     
                         dir('frontend'){
-                            docker_build("wanderlust-frontend-beta","${params.FRONTEND_DOCKER_TAG}","trainwithshubham")
+                            docker_build("eks-frontend","${env.FRONTEND_DOCKER_TAG}","infraflux")
                         }
                 }
             }
@@ -110,8 +112,8 @@ pipeline {
         stage("Docker: Push to DockerHub"){
             steps{
                 script{
-                    docker_push("wanderlust-backend-beta","${params.BACKEND_DOCKER_TAG}","trainwithshubham") 
-                    docker_push("wanderlust-frontend-beta","${params.FRONTEND_DOCKER_TAG}","trainwithshubham")
+                    docker_push("eks-backend","${env.BACKEND_DOCKER_TAG}","infraflux","DockerHub") 
+                    docker_push("eks-frontend","${env.FRONTEND_DOCKER_TAG}","infraflux", "DockerHub")
                 }
             }
         }
@@ -119,9 +121,9 @@ pipeline {
     post{
         success{
             archiveArtifacts artifacts: '*.xml', followSymlinks: false
-            build job: "Wanderlust-CD", parameters: [
-                string(name: 'FRONTEND_DOCKER_TAG', value: "${params.FRONTEND_DOCKER_TAG}"),
-                string(name: 'BACKEND_DOCKER_TAG', value: "${params.BACKEND_DOCKER_TAG}")
+            build job: "EKS-CD", parameters: [
+                string(name: 'FRONTEND_DOCKER_TAG', value: "${env.FRONTEND_DOCKER_TAG}"),
+                string(name: 'BACKEND_DOCKER_TAG', value: "${env.BACKEND_DOCKER_TAG}")
             ]
         }
     }
